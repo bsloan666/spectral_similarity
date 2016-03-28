@@ -1,7 +1,7 @@
 # spectral_similarity
 Python implementation of provisional SSI
 
-One unpacked it should be possible to enter the top-level source directory and type:
+Once unpacked it should be possible to enter the top-level source directory and type:
 
 python ./test_illuminant.py resources/emitters/generic_led_cool.json
 

@@ -59,6 +59,7 @@ import sys
 
 # for array operations and FFT
 import numpy
+import math
 
 # internal Spectrum class
 import spectrum
@@ -66,50 +67,74 @@ import spectrum
 # useful arrays
 import constant_arrays
 
+def fourier_coefficient(k, vec):
+    N = len(vec)
+    accum = 0.0
+    for n in range(N):
+        base =  vec[n]
+        expo =  -2*math.pi*float(k)*float(n)/float(N)
+        p = numpy.exp(numpy.complex(0.0,expo))
+        accum = accum + vec[n] * p
+
+    return accum   
+
+# Step 1.
 # read the test spectrum from a file
 test = spectrum.Spectrum()
 testfile = open(sys.argv[1], 'r')
 test.from_file(testfile)
 testfile.close()
 
+# trapezoid subsample test spectrum
+test_array = test.trapezoid_bin_10nm()[0:36]
+
 # set the ref to 7589 tungsten
 ref_array = constant_arrays.tungsten_7589 
 
-# normalize  ref
+# Step 2. normalize  ref
 p1 = numpy.sum(ref_array)
 ref_array = numpy.divide(ref_array, float(p1))
 
-# trapezoid subsample test spectrum
-test_array = test.trapezoid_bin_10nm()[0:36]
 
 # normalize  test
 p1 = numpy.sum(test_array)
 test_array = numpy.divide(test_array, p1)
 
-# compute the normalized difference
+# Step 3. compute the normalized difference
 diff_array = numpy.subtract(test_array, ref_array)
 
+# Step 4.
 diff_array = numpy.divide(diff_array, ref_array)
 
-# falloff data
+
+# Step 5. falloff data
 falloff_array = constant_arrays.falloff_array[0:36] 
 
 # multiply normdiff by the falloff spectrum
 diff_array = numpy.multiply(diff_array, falloff_array) 
 
-# compute real valued fft
+# Step 6. compute complex valued fft
+# good news: these are identical.
 freq_array = numpy.fft.rfft(diff_array)
+#freq_array = [fourier_coefficient(n, diff_array) for n in range(len(diff_array))] 
 
 # create an array of the first 16 fft components
-first_sixteen = numpy.absolute(freq_array[0:16])
+first_umpteen = freq_array[0:15]
 
-# multiply coefficients by weights
-weighted_freqs = numpy.multiply(first_sixteen, constant_arrays.freq_weights)
+norm_weights = constant_arrays.freq_weights[0:15]
 
-# sum 
+# Tried normalizing the frequency weights. still not correct.
+#p1 = numpy.sum(norm_weights)
+#norm_weights = numpy.divide(norm_weights, float(p1))
+
+# Step 7. multiply coefficients by weights
+weighted_freqs = numpy.absolute(numpy.multiply(first_umpteen, norm_weights))
+
+# Step 8. sum 
 error = numpy.sum(weighted_freqs)
 
-# voila
-print error
+# Step 9. 
+ssi = int(100- pow(error, 0.5))
+print "SSI=",ssi
 
 

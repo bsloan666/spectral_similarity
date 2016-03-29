@@ -89,7 +89,7 @@ testfile.close()
 test_array = test.trapezoid_bin_10nm()[0:36]
 
 # set the ref to 7589 tungsten
-ref_array = constant_arrays.tungsten_7589 
+ref_array = constant_arrays.tungsten_7589[0:36] 
 
 # Step 2. normalize  ref
 p1 = numpy.sum(ref_array)

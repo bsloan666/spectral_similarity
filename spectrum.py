@@ -1,6 +1,8 @@
 import os
+import re
 import sys
 import math
+import numpy
 import json
 
 class Spectrum(object):
@@ -40,6 +42,59 @@ class Spectrum(object):
         self.start =    obj['start']
         self.end =      obj['end']
         self.data =     obj['data']
+
+    def flood_fill(self):
+        dist = 0
+        nm = self.start
+        while  self.data[nm - self.start] < 0.0:
+            nm=nm+1
+        interval_start = nm
+        nm=nm+1;
+        while  self.data[nm - self.start] < 0.0:
+            nm=nm+1
+        interval_end = nm
+
+        last_val = 0.0001
+        next_val = 0.0001
+        interval_len = interval_end - interval_start
+
+        for nm in range(self.start,self.end+1):
+            if self.data[nm - self.start] < 0.0:
+                inv_weight = float(dist)/float(interval_len)
+                weight = 1.0 - inv_weight
+                self.data[nm - self.start] = last_val * weight + next_val * inv_weight
+                dist=dist+1
+            else:
+                last_val = self.data[nm - self.start]
+                index = (nm - self.start) + interval_len
+                if index < (self.end - self.start):
+                    next_val = self.data[index]
+                dist = 0
+
+
+    def import_csv(self, fname):
+        """
+        parser for certain csv archives
+        """
+        handle = open(fname, 'r')
+        lines = handle.readlines()
+        handle.close()
+        start = False
+        self.fill(-1.0)
+        for line in lines:
+            if 'wavelength' not in line: 
+                if not start:
+                    continue
+                else: 
+                    nm, power = re.split(',', line )
+                    if int(nm) >= 370 and int(nm) <= 730:
+                        self.data[int(nm) - self.start] = float(power)
+            else:
+                start=True
+
+        self.flood_fill()
+
+        
 
     def normalize(self):
         """
@@ -82,6 +137,13 @@ class Spectrum(object):
         """
         for nm in range(self.start, self.end+1):
             self.data[nm - self.start] = 0.0
+
+    def fill(self, val):
+        """
+        set to val 
+        """
+        for nm in range(self.start, self.end+1):
+            self.data[nm - self.start] = val 
 
     def add_gaussian(self, center, amplitude, sigma):
         """

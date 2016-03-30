@@ -67,11 +67,14 @@ import spectrum
 # useful arrays
 import constant_arrays
 
+
 def fourier_coefficient(k, vec):
+    """
+    Not used, but matches numpy's fft
+    """
     N = len(vec)
     accum = 0.0
     for n in range(N):
-        base =  vec[n]
         expo =  -2*math.pi*float(k)*float(n)/float(N)
         p = numpy.exp(numpy.complex(0.0,expo))
         accum = accum + vec[n] * p
@@ -81,9 +84,15 @@ def fourier_coefficient(k, vec):
 # Step 1.
 # read the test spectrum from a file
 test = spectrum.Spectrum()
-testfile = open(sys.argv[1], 'r')
-test.from_file(testfile)
-testfile.close()
+
+if sys.argv[1].endswith('.json'):
+    testfile = open(sys.argv[1], 'r')
+    test.from_file(testfile)
+    testfile.close()
+elif sys.argv[1].endswith('.csv'):
+    test.import_csv(sys.argv[1])
+else:
+    print "Error Unrecognized spectrum file format"
 
 # trapezoid subsample test spectrum
 test_array = test.trapezoid_bin_10nm()[0:36]
